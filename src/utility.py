@@ -273,32 +273,18 @@ def visualize_performance_rnn(
     print(f"\nPlots saved to {plot_dir}")
 
 
-def split_dataset_by_tip_position(X, Y, axis=0, threshold=None):
+def split_dataset_by_tip_position(X, Y, axis=0, threshold=0.0):
     """
-    Divide il dataset in due semipiani (LEFT e RIGHT) in base alla posizione media
-    del tip lungo un asse nel task space (Y).
-
-    Args:
-        X (Tensor): attuazioni [N, 9]
-        Y (Tensor): posizioni del tip [N, 3]
-        axis (int): asse del task space su cui dividere (0=x, 1=y, 2=z)
-        threshold (float): valore soglia opzionale per la divisione
-
-    Returns:
-        dict: {'left': (X_left, Y_left), 'right': (X_right, Y_right)}
+    Divide in semipiani LEFT/RIGHT lungo Y[:,axis] rispetto a threshold (es. 0).
     """
     tip_coord = Y[:, axis]
-    if threshold is None:
-        threshold = torch.median(tip_coord).item()
-
     mask_right = tip_coord >= threshold
-    mask_left = ~mask_right
+    mask_left  = tip_coord <  threshold
 
-    print(f"Threshold on axis {axis}: {threshold:.4f} | Right: {mask_right.sum().item()}, Left: {mask_left.sum().item()}")
-
+    print(f"Split on axis {axis} at {threshold:.4f} | Right: {mask_right.sum().item()}, Left: {mask_left.sum().item()}")
     return {
         'right': (X[mask_right], Y[mask_right]),
-        'left': (X[mask_left], Y[mask_left])
+        'left':  (X[mask_left],  Y[mask_left])
     }
 
 
@@ -420,3 +406,33 @@ def plot_model_vs_itself(results_dir, model_name, metric='X_RMSE', labels=('MsDs
     plt.xlabel('Scenario')
     plt.savefig(os.path.join(results_dir, f'{model_name}_{metric}_comparison.png'))
     plt.close()
+
+
+def evaluate_and_save(models, X, Y, device, evaluate_model_fn, results_dir, label):
+    """
+    Valuta i modelli, stampa metriche e salva risultati (CSV e NPZ).
+
+    Args:
+        models (dict): mappa nome->modello
+        X (Tensor): dati di input
+        Y (Tensor): dati target
+        device (torch.device)
+        evaluate_model_fn (callable): funzione che ritorna metrics dict
+        results_dir (str): cartella di salvataggio
+        label (str): nome della fase (es. MsDs)
+    """
+    os.makedirs(results_dir, exist_ok=True)
+    preds = {'true': Y.cpu().numpy()}
+    records = []
+    for name, model in models.items():
+        model.eval()
+        with torch.no_grad():
+            y_pred = model(X.to(device)).cpu().numpy()
+            preds[f'pred_{name}'] = y_pred
+            metrics = evaluate_model_fn(model, X, Y, device)
+            records.append({'side': label, 'model': name, **metrics})
+            print(f"[{label}] {name}: {metrics}")
+    # salva
+    df = pd.DataFrame(records)
+    df.to_csv(os.path.join(results_dir, f'evaluation_{label}.csv'), index=False)
+    np.savez(os.path.join(results_dir, f'predictions_{label}.npz'), **preds)

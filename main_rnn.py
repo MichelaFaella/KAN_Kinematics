@@ -64,4 +64,4 @@ for ep in range(1, epochs + 1):
         torch.save(model.state_dict(), best_path)
 
 # ─── 5) Risultati finali ───────────────────────────────────────────────────
-print(f"\n✅ Best test loss RNN ➔ {best_loss:.4f} (saved to {best_path})")
+print(f"\nBest test loss RNN ➔ {best_loss:.4f} (saved to {best_path})")

@@ -4,14 +4,37 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5d1c1238-4e51-48de-9a37-2e998f87278f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/KAN_project.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+    <list default="true" id="5d1c1238-4e51-48de-9a37-2e998f87278f" name="Changes" comment="Add dataset">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main_continual_learning.py" beforeDir="false" afterPath="$PROJECT_DIR$/main_continual_learning.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main_rnn.py" beforeDir="false" afterPath="$PROJECT_DIR$/main_rnn.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/KAN_X_R2_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/KAN_X_RMSE_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/KAN_Y_R2_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/KAN_Y_RMSE_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/KAN_Z_R2_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/KAN_Z_RMSE_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/MLP_X_R2_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/MLP_X_RMSE_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/MLP_Y_R2_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/MLP_Y_RMSE_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/MLP_Z_R2_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/MLP_Z_RMSE_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bar_MdDd_R2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bar_MdDd_RMSE.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bar_MdDs_R2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bar_MdDs_RMSE.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bar_MsDs_R2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bar_MsDs_RMSE.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/convergenza_loss.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/evaluation_MdDd.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/evaluation_MdDs.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/evaluation_MsDs.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/predictions_MdDd.npz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/predictions_MdDs.npz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/predictions_MsDs.npz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utility.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,28 +47,33 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 3
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
   <component name="ProjectId" id="2yacyI28e5ovXsLGfQN20pkP3sM" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "C:/Users/Michela/PycharmProjects/KAN_project",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Michela/PycharmProjects/KAN_project&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Michela\PycharmProjects\KAN_project" />
+    </key>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -55,7 +83,17 @@
       <option name="presentableId" value="Default" />
       <updated>1750076377502</updated>
       <workItem from="1750076384719" duration="636000" />
+      <workItem from="1750077029097" duration="4517000" />
     </task>
+    <task id="LOCAL-00001" summary="Add dataset">
+      <option name="closed" value="true" />
+      <created>1750077164105</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1750077164105</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -83,5 +121,12 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Add dataset" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add dataset" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/KAN_project$main_continual_learning.coverage" NAME="main_continual_learning Coverage Results" MODIFIED="1750081259401" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

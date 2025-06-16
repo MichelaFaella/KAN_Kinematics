@@ -1,134 +1,112 @@
 import os
-import numpy as np
-import pandas as pd
 import torch
 from torch import nn
+from torch.utils.data import TensorDataset, DataLoader
 from dataset.data_loader import DataLoader as MyDataLoader
 from src.KAN.KAN_Net import KAN_Net
 from src.MLP.MLP_Net import MLP_Net
 from src.utility import (
-    split_dataset_by_tip_position, evaluate_model,
-    plot_generalization_results, plot_model_vs_itself
+    split_dataset_by_tip_position,
+    train_one_epoch,
+    evaluate_and_save,
+    evaluate_model,
+    plot_model_vs_itself
 )
 
+# 1) Setup device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# === Load dataset ===
+# 2) Load & normalize dataset
 dl = MyDataLoader()
 dl.load_data(deformation="bending", trial_num=2)
 data = dl.get_data()
-X = torch.tensor(data['actuation'], dtype=torch.float32)
-Y = torch.tensor(data['markers'][:, -1, :], dtype=torch.float32)
-splits = split_dataset_by_tip_position(X, Y)
-X_left, Y_left = splits['left']
+X_raw = torch.tensor(data['actuation'], dtype=torch.float32)
+Y     = torch.tensor(data['markers'][:, -1, :], dtype=torch.float32)
+
+# Normalize X feature‐wise to [-1,1]
+X_min, X_max = X_raw.min(0)[0], X_raw.max(0)[0]
+X = 2 * (X_raw - X_min) / (X_max - X_min) - 1.0
+
+# 3) Split semipiani based on tip position along Y (axis=1) w.r.t. 0.0
+splits = split_dataset_by_tip_position(X, Y, axis=1, threshold=0.0)
+X_left,  Y_left  = splits['left']
 X_right, Y_right = splits['right']
 
-# === Common settings ===
+# 4) DataLoaders
 batch_size = 64
-epochs = 100
+epochs     = 100
+loader_left  = DataLoader(TensorDataset(X_left,  Y_left),  batch_size=batch_size, shuffle=True)
+loader_right = DataLoader(TensorDataset(X_right, Y_right), batch_size=batch_size, shuffle=True)
+
+# 5) Prepare results dir
 results_dir = "results"
 os.makedirs(results_dir, exist_ok=True)
 
+# 6) Build models + optimizers
+kan = KAN_Net(
+    input_dim=9,
+    layer_configs=[
+        {"out_features":64, "n_knots":16, "x_min":-1.0, "x_max":1.0, "use_bn":True,  "activation":nn.ReLU(), "dropout":0.1},
+        {"out_features":32, "n_knots":12, "x_min":-1.0, "x_max":1.0, "use_bn":False, "activation":nn.ReLU(), "dropout":0.0},
+    ],
+    output_dim=3
+).to(device)
 
-# === Define models ===
-def build_models():
-    kan = KAN_Net(
-        input_dim=9,
-        layer_configs=[
-            {"out_features": 64, "n_knots": 16, "x_min": -1.0, "x_max": 1.0, "use_bn": True, "activation": nn.ReLU(),
-             "dropout": 0.1},
-            {"out_features": 32, "n_knots": 12, "x_min": -1.0, "x_max": 1.0, "use_bn": False, "activation": nn.ReLU(),
-             "dropout": 0.0},
-        ],
-        output_dim=3
-    ).to(device)
+mlp = MLP_Net(input_dim=9, hidden_dims=[32,32], output_dim=3).to(device)
 
-    mlp = MLP_Net(input_dim=9, hidden_dims=[64, 32], output_dim=3).to(device)
-    return kan, mlp
-
-
-loss_fn = nn.MSELoss()
-
-
-# === Train function ===
-def train(model, optimizer, loader, loss_list):
-    model.train()
-    total_loss = 0.0
-    for xb, yb in loader:
-        xb, yb = xb.to(device), yb.to(device)
-        optimizer.zero_grad()
-        loss = loss_fn(model(xb), yb)
-        loss.backward()
-        optimizer.step()
-        total_loss += loss.item() * xb.size(0)
-    loss_list.append(total_loss / len(loader.dataset))
-
-
-# === Evaluate function ===
-def evaluate(models, X, Y, label):
-    preds = {"true": Y.numpy()}
-    records = []
-
-    for name, model in models.items():
-        model.eval()
-        with torch.no_grad():
-            y_pred = model(X.to(device)).cpu().numpy()
-            preds[f"pred_{name}"] = y_pred
-            metrics = evaluate_model(model, X, Y, device)
-            records.append({"side": label, "model": name, **metrics})
-            print(f"[{label}] {name}:", metrics)
-
-    # Save
-    csv_path = os.path.join(results_dir, f"evaluation_{label}.csv")
-    npz_path = os.path.join(results_dir, f"predictions_{label}.npz")
-    pd.DataFrame(records).to_csv(csv_path, index=False)
-    np.savez(npz_path, **preds)
-
-
-# === Phase 1: MsDs (train LEFT, test LEFT) ===
-kan, mlp = build_models()
 opt_kan = torch.optim.Adam(kan.parameters(), lr=1e-3)
 opt_mlp = torch.optim.Adam(mlp.parameters(), lr=1e-3)
-train_loader_left = torch.utils.data.DataLoader(torch.utils.data.TensorDataset(X_left, Y_left), batch_size=batch_size,
-                                                shuffle=True)
 
-train_losses_kan, train_losses_mlp = [], []
-for _ in range(epochs):
-    train(kan, opt_kan, train_loader_left, train_losses_kan)
-    train(mlp, opt_mlp, train_loader_left, train_losses_mlp)
+loss_fn     = nn.MSELoss()
+model_names = ['KAN','MLP']
+models      = [kan, mlp]
+opts        = [opt_kan, opt_mlp]
 
-evaluate({'KAN': kan, 'MLP': mlp}, X_left, Y_left, label="MsDs")
+# === Phase 1: Ms (train on LEFT) ===
+print("\n=== Phase 1: Ms (train on LEFT) ===")
+for epoch in range(1, epochs+1):
+    for name, model, opt in zip(model_names, models, opts):
+        loss = train_one_epoch(model, loader_left, loss_fn, opt, device)
+        print(f"[MsDs][Epoch {epoch}/{epochs}] {name} train loss: {loss:.4f}")
 
-# === Phase 2: MdDs (train RIGHT, test LEFT) ===
-kan2, mlp2 = build_models()
-opt_kan2 = torch.optim.Adam(kan2.parameters(), lr=1e-3)
-opt_mlp2 = torch.optim.Adam(mlp2.parameters(), lr=1e-3)
-train_loader_right = torch.utils.data.DataLoader(torch.utils.data.TensorDataset(X_right, Y_right),
-                                                 batch_size=batch_size, shuffle=True)
+# Evaluate Ms on LEFT
+evaluate_and_save(
+    {'KAN': kan, 'MLP': mlp},
+    X_left, Y_left,
+    device, evaluate_model, results_dir,
+    label='MsDs'
+)
 
-for _ in range(epochs):
-    train(kan2, opt_kan2, train_loader_right, train_losses_kan)
-    train(mlp2, opt_mlp2, train_loader_right, train_losses_mlp)
+# === Phase 2: Md (fine‐tune on RIGHT) ===
+print("\n=== Phase 2: Md (fine‐tune on RIGHT) ===")
+for epoch in range(1, epochs+1):
+    for name, model, opt in zip(model_names, models, opts):
+        loss = train_one_epoch(model, loader_right, loss_fn, opt, device)
+        print(f"[MdDs][Epoch {epoch}/{epochs}] {name} train loss: {loss:.4f}")
 
-evaluate({'KAN': kan2, 'MLP': mlp2}, X_left, Y_left, label="MdDs")
+# Evaluate Md on LEFT (MdDs)
+evaluate_and_save(
+    {'KAN': kan, 'MLP': mlp},
+    X_left, Y_left,
+    device, evaluate_model, results_dir,
+    label='MdDs'
+)
 
-# === Phase 3: MdDd (test RIGHT) ===
-evaluate({'KAN': kan2, 'MLP': mlp2}, X_right, Y_right, label="MdDd")
+# Evaluate Md on RIGHT (MdDd)
+evaluate_and_save(
+    {'KAN': kan, 'MLP': mlp},
+    X_right, Y_right,
+    device, evaluate_model, results_dir,
+    label='MdDd'
+)
 
-# === Plot generalization ===
-for label in ["MsDs", "MdDs", "MdDd"]:
-    plot_generalization_results(
-        results_csv=os.path.join(results_dir, f"evaluation_{label}.csv"),
-        semipiani_npz=os.path.join(results_dir, f"predictions_{label}.npz"),
-        train_losses_kan=train_losses_kan,
-        test_losses_kan=None,
-        train_losses_mlp=train_losses_mlp,
-        test_losses_mlp=None,
-        results_dir=results_dir
-    )
-
-# === Plot KAN vs KAN and MLP vs MLP: MsDs vs MdDs ===
-for model in ['KAN', 'MLP']:
-    for metric in ['X_RMSE', 'Y_RMSE', 'Z_RMSE', 'X_R2', 'Y_R2', 'Z_R2']:
-        plot_model_vs_itself(results_dir, model_name=model, metric=metric, labels=('MsDs', 'MdDs'))
+# === Plot Ms vs Md for each model ===
+for name in model_names:
+    for metric in ['X_RMSE','Y_RMSE','Z_RMSE','X_R2','Y_R2','Z_R2']:
+        plot_model_vs_itself(
+            results_dir,
+            model_name=name,
+            metric=metric,
+            labels=('MsDs','MdDs')
+        )
