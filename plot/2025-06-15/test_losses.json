@@ -1,0 +1,20 @@
+{
+    "KAN_test_loss": 8.01734327545166,
+    "MLP_test_loss": 15.084763278198242,
+
+    X:
+      KAN ➜ RMSE = 2.4806, R² = 0.9860
+      MLP ➜ RMSE = 3.3276, R² = 0.9748
+    Y:
+      KAN ➜ RMSE = 3.1429, R² = 0.9430
+      MLP ➜ RMSE = 4.1780, R² = 0.8993
+    Z:
+      KAN ➜ RMSE = 2.8321, R² = 0.8843
+      MLP ➜ RMSE = 4.0897, R² = 0.7587
+
+        | Modello | Epoche per convergenza | Tempo per epoca (medio) | Tempo totale stimato |
+        | ------- | ---------------------- | ----------------------- | -------------------- |
+        | **KAN** | \~6 epoche             | \~0.4 s                 | **\~2.4 secondi**    |
+        | **MLP** | \~12 epoche            | \~0.3 s                 | **\~3.6 secondi**    |
+
+}
