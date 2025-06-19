@@ -35,7 +35,9 @@ class KAN_Cell(nn.Module):
             dropout=cfg_hid["dropout"]
         )
 
+        self.norm = nn.LayerNorm(hidden_dim)
         self.activation = nn.Tanh()
+        self.drop = nn.Dropout(p=0.1)
 
     def forward(self, x_t: torch.Tensor, h_prev: torch.Tensor) -> torch.Tensor:
         # Trasforma input e stato precedente
