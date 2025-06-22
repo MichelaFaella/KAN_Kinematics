@@ -4,6 +4,7 @@ import numpy as np
 import os
 import datetime
 import pandas as pd
+from torch import nn
 
 from torch.utils.data import DataLoader, TensorDataset
 from dataset.data_loader import DataLoader as MyDataLoader
@@ -468,3 +469,25 @@ def plot_actuations(t, actuations, title, filename):
     plt.savefig(filename)
     plt.close()
 
+def plot_kan_splines(model, save_dir="kan_splines_good"):
+    os.makedirs(save_dir, exist_ok=True)
+
+    for i, layer in enumerate(model.modules()):
+        if isinstance(layer, nn.Module) and hasattr(layer, "export_splines"):
+            x_vals, y_vals = layer.export_splines()  # y_vals shape: [out_f, in_f, n_knots]
+            n_out, n_in, n_knots = y_vals.shape
+
+            for in_idx in range(n_in):
+                plt.figure(figsize=(8, 5))
+                for out_idx in range(n_out):
+                    plt.plot(x_vals, y_vals[out_idx, in_idx], label=f"Out {out_idx}")
+                plt.title(f"Layer {i} – Input {in_idx}")
+                plt.xlabel("Input Value")
+                plt.ylabel("Spline Output")
+                plt.grid(True)
+                plt.legend()
+                fname = os.path.join(save_dir, f"layer{i}_input{in_idx}.png")
+                plt.savefig(fname)
+                plt.close()
+
+    print(f"✅ Grouped spline plots saved to '{save_dir}'")

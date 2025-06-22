@@ -15,6 +15,8 @@ class KAN_Layer(nn.Module):
         self.in_f = in_features
         self.out_f = out_features
         self.nk = n_knots
+        self.x_min = x_min
+        self.x_max = x_max
         # Fixed knot positions
         self.register_buffer(
             "knots",
@@ -49,3 +51,11 @@ class KAN_Layer(nn.Module):
         phi = c0 * (1 - t.squeeze(-1)) + c1 * t.squeeze(-1)
         # Sum over inputs
         return phi.sum(dim=2)
+
+    def export_splines(self):
+        """
+        Restituisce i punti (x, y) per ogni spline [out, in]
+        """
+        x = self.knots.detach().cpu().numpy()
+        y = self.coeffs.detach().cpu().numpy()  # shape: [out, in, n_knots]
+        return x, y
