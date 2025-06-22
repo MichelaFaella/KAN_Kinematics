@@ -2,142 +2,162 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-import matplotlib.pyplot as plt
 from torch.utils.data import TensorDataset, DataLoader
-
+from sklearn.metrics import mean_squared_error
 from src.MLP.MLP_Net import MLP_Net
+from dataset.data_loader import DataLoader as MyDataLoader
+from src.utility import plot_colored_trajectory, plot_actuations
+import PIL.Image as Image
 
-# ------------------------------
-# Device setup
-# ------------------------------
+
+# ----- Normalizzazione -----
+def normalize(tensor):
+    mean = tensor.mean(dim=0, keepdim=True)
+    std = tensor.std(dim=0, keepdim=True) + 1e-8
+    norm = (tensor - mean) / std
+    return norm, mean.squeeze(), std.squeeze()
+
+
+def denormalize(tensor, mean, std):
+    return tensor * std + mean
+
+
+# ----- Config -----
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("✅ Using", device)
 
-# ------------------------------
-# Ground truth forward model
-# ------------------------------
-def direct_kinematics(cables: torch.Tensor) -> torch.Tensor:
-    W = torch.tensor([[0.2, -0.1, 0.1],
-                      [0.1,  0.3, -0.2]], dtype=torch.float32)
-    b = torch.tensor([0.0, 0.0], dtype=torch.float32)
-    return cables @ W.T + b
+# ----- Load real dataset -----
+dl = MyDataLoader()
+dl.load_data(deformation="bending", trial_num=1)
+data = dl.get_data()
 
-# ------------------------------
-# Dataset creation
-# ------------------------------
-n_samples = 100000
-cables = torch.rand(n_samples, 3)
-positions = direct_kinematics(cables)
+actuations_raw = torch.tensor(data["actuation"], dtype=torch.float32)
+positions_raw = torch.tensor(data["markers"][:, -1, :2], dtype=torch.float32)
 
-split = int(0.8 * n_samples)
-train_fwd = TensorDataset(cables[:split], positions[:split])
-val_fwd = TensorDataset(cables[split:], positions[split:])
-train_inv = TensorDataset(positions[:split], cables[:split])
-val_inv = TensorDataset(positions[split:], cables[split:])
+print(f"👉 Shape actuation: {actuations_raw.shape}")
+print(f"👉 Shape markers: {positions_raw.shape}")
+
+# ----- Normalizza -----
+actuations, mean_act, std_act = normalize(actuations_raw)
+positions, mean_pos, std_pos = normalize(positions_raw)
+
+print("✅ Normalizzazione completata")
+print(f"Actuation mean: {mean_act.tolist()}")
+print(f"Position mean: {mean_pos.tolist()}")
+
+
+# ----- Traiettorie sintetiche -----
+def circle(radius, center, N):
+    t = np.linspace(0, 2 * np.pi, N)
+    return np.stack([center[0] + radius * np.cos(t), center[1] + radius * np.sin(t)], axis=1), t
+
+
+def infinity(a, b, center, N):
+    t = np.linspace(0, 2 * np.pi, N)
+    return np.stack([center[0] + a * np.sin(t), center[1] + b * np.sin(2 * t)], axis=1), t
+
+
+N = 200
+center = mean_pos.tolist()
+circle_pts, t_circle = circle(0.1, center, N)
+infinity_pts, t_infinity = infinity(0.1, 0.05, center, N)
+
+circle_pts_tensor = torch.tensor(circle_pts, dtype=torch.float32)
+infinity_pts_tensor = torch.tensor(infinity_pts, dtype=torch.float32)
+
+# ----- Calcolo range dinamico includendo punti sintetici -----
+all_positions = torch.cat([positions, circle_pts_tensor, infinity_pts_tensor], dim=0)
+pos_min = all_positions.min(dim=0)[0]
+pos_max = all_positions.max(dim=0)[0]
+padding_pos = 0.1 * (pos_max - pos_min)
+x_min_pos = (pos_min - padding_pos).tolist()
+x_max_pos = (pos_max + padding_pos).tolist()
+
+act_min = actuations.min()
+act_max = actuations.max()
+padding_act = 0.1 * (act_max - act_min)
+x_min_act = (act_min - padding_act).item()
+x_max_act = (act_max + padding_act).item()
+
+print(f"📐 Pos range incl. synthetic: {x_min_pos} → {x_max_pos}")
+print(f"📐 Act range padded: {x_min_act:.3f} → {x_max_act:.3f}")
+
+# ----- Split dataset -----
+split = int(0.8 * len(actuations))
+train_fwd = TensorDataset(actuations[:split], positions[:split])
+train_inv = TensorDataset(positions[:split], actuations[:split])
 
 loader_fwd = DataLoader(train_fwd, batch_size=128, shuffle=True)
 loader_inv = DataLoader(train_inv, batch_size=128, shuffle=True)
 
-# ------------------------------
-# Model setup
-# ------------------------------
-inv_model = MLP_Net(input_dim=2, hidden_dims=[64, 32], output_dim=3).to(device)
-fwd_model = MLP_Net(input_dim=3, hidden_dims=[64, 32], output_dim=2).to(device)
+# ----- Modelli MLP -----
+inv_model = MLP_Net(input_dim=2, hidden_dims=[64, 32], output_dim=9).to(device)
+fwd_model = MLP_Net(input_dim=9, hidden_dims=[64, 32], output_dim=2).to(device)
 
 criterion = nn.MSELoss()
 opt_inv = optim.Adam(inv_model.parameters(), lr=5e-4, weight_decay=1e-5)
 opt_fwd = optim.Adam(fwd_model.parameters(), lr=5e-4, weight_decay=1e-5)
 
-# ------------------------------
-# Training loop
-# ------------------------------
+# ----- Training -----
 epochs = 50
 for epoch in range(1, epochs + 1):
-    inv_model.train(); fwd_model.train()
+    inv_model.train();
+    fwd_model.train()
     tot_loss = 0.0
+    for (pos_in, act_gt), (act_in, pos_gt) in zip(loader_inv, loader_fwd):
+        pos_in, act_gt = pos_in.to(device), act_gt.to(device)
+        act_in, pos_gt = act_in.to(device), pos_gt.to(device)
 
-    for (p_in, c_gt), (c_in, p_gt) in zip(loader_inv, loader_fwd):
-        p_in, c_gt = p_in.to(device), c_gt.to(device)
-        c_in, p_gt = c_in.to(device), p_gt.to(device)
-
-        # Forward model training
         opt_fwd.zero_grad()
-        p_pred = fwd_model(c_in)
-        loss_fwd = criterion(p_pred, p_gt)
+        pos_pred = fwd_model(act_in)
+        loss_fwd = criterion(pos_pred, pos_gt)
 
-        # Inverse model training
         opt_inv.zero_grad()
-        c_pred = inv_model(p_in)
-        loss_inv = criterion(c_pred, c_gt)
+        act_pred = inv_model(pos_in)
+        loss_inv = criterion(act_pred, act_gt)
 
-        # Cycle consistency
-        p_cycle = fwd_model(c_pred)
-        loss_cycle = criterion(p_cycle, p_in)
+        pos_cycle = fwd_model(act_pred)
+        loss_cycle = criterion(pos_cycle, pos_in)
 
-        # Combined loss
         loss = loss_fwd + loss_inv + 0.5 * loss_cycle
         loss.backward()
         opt_fwd.step()
         opt_inv.step()
 
         tot_loss += loss.item()
-
     print(f"Epoch {epoch:02d} | Total Loss: {tot_loss:.4f}")
 
-# ------------------------------
-# Save models
-# ------------------------------
+# ----- Salva -----
 torch.save(inv_model.state_dict(), "mlp_inv_model.pth")
 torch.save(fwd_model.state_dict(), "mlp_fwd_model.pth")
 
-# ------------------------------
-# Evaluation: circle + infinity
-# ------------------------------
-def circle(radius, center, N):
-    t = np.linspace(0, 2 * np.pi, N)
-    return np.stack([center[0] + radius * np.cos(t), center[1] + radius * np.sin(t)], axis=1), t
-
-def infinity(a, b, center, N):
-    t = np.linspace(0, 2 * np.pi, N)
-    return np.stack([center[0] + a * np.sin(t), center[1] + b * np.sin(2*t)], axis=1), t
-
-inv_model.eval(); fwd_model.eval()
-N = 200
-circle_pts, t_circle = circle(0.1, (0, 0), N)
-infinity_pts, t_infinity = infinity(0.1, 0.05, (0, 0), N)
-
+# ----- Evaluation -----
+inv_model.eval();
+fwd_model.eval()
 with torch.no_grad():
-    circle_act = inv_model(torch.from_numpy(circle_pts).float().to(device))
-    circle_rec = fwd_model(circle_act).cpu().numpy()
+    c_norm = (circle_pts_tensor - mean_pos) / std_pos
+    i_norm = (infinity_pts_tensor - mean_pos) / std_pos
 
-    inf_act = inv_model(torch.from_numpy(infinity_pts).float().to(device))
-    inf_rec = fwd_model(inf_act).cpu().numpy()
+    circle_act = inv_model(c_norm.to(device))
+    inf_act = inv_model(i_norm.to(device))
 
-# ------------------------------
-# Plotting
-# ------------------------------
-plt.figure(figsize=(5, 5))
-plt.plot(circle_pts[:, 0], circle_pts[:, 1], 'b--', label='Original')
-plt.plot(circle_rec[:, 0], circle_rec[:, 1], 'orange', label='Reconstructed')
-plt.title('Circle'); plt.legend(); plt.axis('equal'); plt.grid(True)
-plt.savefig("circle_reconstruction.png")
+    circle_rec = fwd_model(circle_act).cpu()
+    inf_rec = fwd_model(inf_act).cpu()
 
-plt.figure(figsize=(5, 5))
-plt.plot(infinity_pts[:, 0], infinity_pts[:, 1], 'b--', label='Original')
-plt.plot(inf_rec[:, 0], inf_rec[:, 1], 'orange', label='Reconstructed')
-plt.title('Infinity'); plt.legend(); plt.axis('equal'); plt.grid(True)
-plt.savefig("infinity_reconstruction.png")
+# ----- Denormalizzazione e centratura -----
+circle_rec = denormalize(circle_rec, mean_pos, std_pos).numpy()
+inf_rec = denormalize(inf_rec, mean_pos, std_pos).numpy()
 
-plt.figure(figsize=(6, 4))
-for k in range(circle_act.shape[1]):
-    plt.plot(t_circle, circle_act[:, k].cpu(), label=f'Actuator {k+1}')
-plt.title('Actuations - Circle'); plt.legend(); plt.grid(True)
-plt.savefig("actuation_circle.png")
+circle_rec = circle_rec + (circle_pts.mean(axis=0) - circle_rec.mean(axis=0))
+inf_rec = inf_rec + (infinity_pts.mean(axis=0) - inf_rec.mean(axis=0))
 
-plt.figure(figsize=(6, 4))
-for k in range(inf_act.shape[1]):
-    plt.plot(t_infinity, inf_act[:, k].cpu(), label=f'Actuator {k+1}')
-plt.title('Actuations - Infinity'); plt.legend(); plt.grid(True)
-plt.savefig("actuation_infinity.png")
+# ----- MSE -----
+print(f"🔵 MSE Cerchio (MLP): {mean_squared_error(circle_pts, circle_rec):.6f}")
+print(f"🔁 MSE Infinito (MLP): {mean_squared_error(infinity_pts, inf_rec):.6f}")
 
-plt.show()
+# ----- Plot -----
+plot_colored_trajectory(circle_pts, circle_rec, t_circle, "Cerchio", "plot_inv/circle_workspace_colorcoded_mlp.png", "MLP")
+plot_colored_trajectory(infinity_pts, inf_rec, t_infinity, "Infinito", "plot_inv/infinity_workspace_colorcoded_mlp.png", "MLP")
+
+plot_actuations(t_circle, circle_act.cpu(), "Attuazioni - Cerchio (MLP)", "plot_inv/actuation_circle_mlp.png")
+plot_actuations(t_infinity, inf_act.cpu(), "Attuazioni - Infinito (MLP)", "plot_inv/actuation_infinity_mlp.png")

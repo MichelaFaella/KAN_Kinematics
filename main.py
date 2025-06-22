@@ -31,9 +31,9 @@ _, seq_test_loader, in_dim, out_dim = prepare_sequence_loaders(
 # 2) Configurazione KAN
 layer_configs = [
     {"out_features": 64, "n_knots": 16, "x_min": -1.0, "x_max": 1.0,
-     "use_bn": True, "activation": nn.ReLU(), "dropout": 0.1},
+     "use_bn": True, "dropout": 0.1},
     {"out_features": 32, "n_knots": 12, "x_min": -1.0, "x_max": 1.0,
-     "use_bn": False, "activation": nn.ReLU(), "dropout": 0.0},
+     "use_bn": False, "dropout": 0.0},
 ]
 
 # 3) Instanzia modelli e carica pesi

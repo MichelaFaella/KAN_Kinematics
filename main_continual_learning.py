@@ -47,9 +47,9 @@ os.makedirs(results_dir, exist_ok=True)
 kan = KAN_Net(
     input_dim=9,
     layer_configs=[
-        {"out_features": 64, "n_knots": 16, "x_min": -1.0, "x_max": 1.0, "use_bn": True, "activation": nn.ReLU(),
+        {"out_features": 64, "n_knots": 16, "x_min": -1.0, "x_max": 1.0, "use_bn": True,
          "dropout": 0.1},
-        {"out_features": 32, "n_knots": 12, "x_min": -1.0, "x_max": 1.0, "use_bn": False, "activation": nn.ReLU(),
+        {"out_features": 32, "n_knots": 12, "x_min": -1.0, "x_max": 1.0, "use_bn": False,
          "dropout": 0.0},
     ],
     output_dim=3

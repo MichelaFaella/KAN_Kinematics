@@ -436,3 +436,35 @@ def evaluate_and_save(models, X, Y, device, evaluate_model_fn, results_dir, labe
     df = pd.DataFrame(records)
     df.to_csv(os.path.join(results_dir, f'evaluation_{label}.csv'), index=False)
     np.savez(os.path.join(results_dir, f'predictions_{label}.npz'), **preds)
+
+
+def plot_colored_trajectory(gt_pts, rec_pts, t, title, filename, name):
+    plt.figure(figsize=(6, 5))
+
+    # Target: linea nera tratteggiata (non color coded)
+    plt.plot(gt_pts[:, 0], gt_pts[:, 1], 'k--', label='Target', linewidth=1.5)
+
+    # Predetto: color coded sul tempo
+    scatter = plt.scatter(rec_pts[:, 0], rec_pts[:, 1], c=t, cmap='autumn', label='Predicted', alpha=0.9)
+
+    plt.title(f"Traiettoria nel workspace {name} - {title}")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.colorbar(scatter, label='Tempo (target)')
+    plt.legend()
+    plt.axis('equal')
+    plt.grid(True)
+    plt.savefig(filename)
+    plt.close()
+
+
+def plot_actuations(t, actuations, title, filename):
+    plt.figure(figsize=(6, 4))
+    for k in range(actuations.shape[1]):
+        plt.plot(t, actuations[:, k].cpu(), label=f'Actuatore {k+1}')
+    plt.title(title)
+    plt.xlabel("Tempo"); plt.ylabel("Lunghezza")
+    plt.legend(); plt.grid(True)
+    plt.savefig(filename)
+    plt.close()
+
