@@ -4,16 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5d1c1238-4e51-48de-9a37-2e998f87278f" name="Changes" comment="Inverse evaluation made plot">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/inverse_main.py" beforeDir="false" afterPath="$PROJECT_DIR$/inverse_main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plot/actuator_0_prediction.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plot/actuator_1_prediction.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plot/actuator_2_prediction.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/KAN/Kan_Layer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/KAN/Kan_Layer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utility.py" afterDir="false" />
-    </list>
+    <list default="true" id="5d1c1238-4e51-48de-9a37-2e998f87278f" name="Changes" comment="Sline plot" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -77,7 +68,7 @@
       <workItem from="1750345909055" duration="184000" />
       <workItem from="1750346102537" duration="1213000" />
       <workItem from="1750533469897" duration="6013000" />
-      <workItem from="1750582369798" duration="13849000" />
+      <workItem from="1750582369798" duration="14252000" />
     </task>
     <task id="LOCAL-00001" summary="Add dataset">
       <option name="closed" value="true" />
@@ -135,7 +126,23 @@
       <option name="project" value="LOCAL" />
       <updated>1750594116901</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Sline plot">
+      <option name="closed" value="true" />
+      <created>1750599342381</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1750599342381</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Sline plot">
+      <option name="closed" value="true" />
+      <created>1750599355166</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1750599355166</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -172,7 +179,8 @@
     <MESSAGE value="plot" />
     <MESSAGE value="Inverse evaluation made" />
     <MESSAGE value="Inverse evaluation made plot" />
-    <option name="LAST_COMMIT_MESSAGE" value="Inverse evaluation made plot" />
+    <MESSAGE value="Sline plot" />
+    <option name="LAST_COMMIT_MESSAGE" value="Sline plot" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/KAN_project$inverse_main_mlp.coverage" NAME="inverse_main_mlp Coverage Results" MODIFIED="1750590633739" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

@@ -81,7 +81,7 @@ visualize_performance(
 )
 
 # ----- Salvataggio Risultati -----
-plot_dir = os.path.join("plot_rnn", datetime.date.today().isoformat())
+plot_dir = os.path.join("plots/plot_rnn", datetime.date.today().isoformat())
 os.makedirs(plot_dir, exist_ok=True)
 with open(os.path.join(plot_dir, "test_losses.json"), "w") as f:
     json.dump({"KAN_test_loss": l_ts_kan, "MLP_test_loss": l_ts_mlp}, f, indent=4)

@@ -40,7 +40,7 @@ loader_left = DataLoader(TensorDataset(X_left, Y_left), batch_size=batch_size, s
 loader_right = DataLoader(TensorDataset(X_right, Y_right), batch_size=batch_size, shuffle=True)
 
 # 5) Prepare results dir
-results_dir = "results"
+results_dir = "plots/results"
 os.makedirs(results_dir, exist_ok=True)
 
 # 6) Build models + optimizers

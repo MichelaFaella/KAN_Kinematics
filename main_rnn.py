@@ -42,7 +42,7 @@ model = KAN_Rnn(
 opt = optim.Adam(model.parameters(), lr=lr)
 loss_fn = nn.MSELoss()
 best_loss = float('inf')
-best_path = "best_kan_rnn.pth"
+best_path = "models/best_kan_rnn.pth"
 
 
 # ─── 4) Funzioni di training / val (raw data) ───────────────────────────────

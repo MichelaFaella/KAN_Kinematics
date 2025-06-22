@@ -156,8 +156,10 @@ print(f"🔵 MSE Cerchio (MLP): {mean_squared_error(circle_pts, circle_rec):.6f}
 print(f"🔁 MSE Infinito (MLP): {mean_squared_error(infinity_pts, inf_rec):.6f}")
 
 # ----- Plot -----
-plot_colored_trajectory(circle_pts, circle_rec, t_circle, "Cerchio", "plot_inv/circle_workspace_colorcoded_mlp.png", "MLP")
-plot_colored_trajectory(infinity_pts, inf_rec, t_infinity, "Infinito", "plot_inv/infinity_workspace_colorcoded_mlp.png", "MLP")
+plot_colored_trajectory(circle_pts, circle_rec, t_circle, "Cerchio",
+                        "plots/plot_inv/circle_workspace_colorcoded_mlp.png", "MLP")
+plot_colored_trajectory(infinity_pts, inf_rec, t_infinity, "Infinito",
+                        "plots/plot_inv/infinity_workspace_colorcoded_mlp.png", "MLP")
 
-plot_actuations(t_circle, circle_act.cpu(), "Attuazioni - Cerchio (MLP)", "plot_inv/actuation_circle_mlp.png")
-plot_actuations(t_infinity, inf_act.cpu(), "Attuazioni - Infinito (MLP)", "plot_inv/actuation_infinity_mlp.png")
+plot_actuations(t_circle, circle_act.cpu(), "Attuazioni - Cerchio (MLP)", "plots/plot_inv/actuation_circle_mlp.png")
+plot_actuations(t_infinity, inf_act.cpu(), "Attuazioni - Infinito (MLP)", "plots/plot_inv/actuation_infinity_mlp.png")
