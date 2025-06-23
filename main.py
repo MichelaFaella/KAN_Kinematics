@@ -8,7 +8,7 @@ from src.KAN.KAN_Net import KAN_Net
 from src.MLP.MLP_Net import MLP_Net
 from src.utility import (
     prepare_loaders, prepare_sequence_loaders,
-    eval_loss, visualize_performance, plot_kan_splines
+    eval_loss, visualize_performance, extract_equations_from_kan
 )
 
 # ----- Configurazione -----
@@ -79,22 +79,8 @@ l_ts_mlp = eval_loss(mlp, test_loader, loss_fn, device)
 print(f"📊 Static KAN test loss: {l_ts_kan:.4f}")
 print(f"📊 Static MLP test loss: {l_ts_mlp:.4f}")
 
-# ----- Visualizzazione -----
-visualize_performance(
-    test_losses_kan=[l_ts_kan],
-    test_losses_mlp=[l_ts_mlp],
-    kan=kan,
-    mlp=mlp,
-    test_loader=test_loader,
-    device=device
-)
-
 # ----- Salvataggio Risultati -----
-plot_dir = os.path.join("plots/plot_rnn", datetime.date.today().isoformat())
-os.makedirs(plot_dir, exist_ok=True)
-with open(os.path.join(plot_dir, "test_losses.json"), "w") as f:
-    json.dump({"KAN_test_loss": l_ts_kan, "MLP_test_loss": l_ts_mlp}, f, indent=4)
-print(f"✅ Saved test losses to {os.path.join(plot_dir, 'test_losses.json')}")
+plot_dir = os.path.join("plots/splines_export", datetime.date.today().isoformat())
 
 # ----- Visualizza spline KAN -----
-plot_kan_splines(kan)
+extract_equations_from_kan(kan, plot_dir)

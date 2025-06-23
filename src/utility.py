@@ -280,14 +280,13 @@ def split_dataset_by_tip_position(X, Y, axis=0, threshold=0.0):
     """
     tip_coord = Y[:, axis]
     mask_right = tip_coord >= threshold
-    mask_left  = tip_coord <  threshold
+    mask_left = tip_coord < threshold
 
     print(f"Split on axis {axis} at {threshold:.4f} | Right: {mask_right.sum().item()}, Left: {mask_left.sum().item()}")
     return {
         'right': (X[mask_right], Y[mask_right]),
-        'left':  (X[mask_left],  Y[mask_left])
+        'left': (X[mask_left], Y[mask_left])
     }
-
 
 
 def compute_metrics(y_true, y_pred):
@@ -462,32 +461,79 @@ def plot_colored_trajectory(gt_pts, rec_pts, t, title, filename, name):
 def plot_actuations(t, actuations, title, filename):
     plt.figure(figsize=(6, 4))
     for k in range(actuations.shape[1]):
-        plt.plot(t, actuations[:, k].cpu(), label=f'Actuatore {k+1}')
+        plt.plot(t, actuations[:, k].cpu(), label=f'Actuatore {k + 1}')
     plt.title(title)
-    plt.xlabel("Tempo"); plt.ylabel("Lunghezza")
-    plt.legend(); plt.grid(True)
+    plt.xlabel("Tempo");
+    plt.ylabel("Lunghezza")
+    plt.legend();
+    plt.grid(True)
     plt.savefig(filename)
     plt.close()
 
-def plot_kan_splines(model, save_dir="kan_splines_good"):
-    os.makedirs(save_dir, exist_ok=True)
 
-    for i, layer in enumerate(model.modules()):
-        if isinstance(layer, nn.Module) and hasattr(layer, "export_splines"):
-            x_vals, y_vals = layer.export_splines()  # y_vals shape: [out_f, in_f, n_knots]
-            n_out, n_in, n_knots = y_vals.shape
+def extract_equations_from_kan(model, plot_dir):
+    os.makedirs(plot_dir, exist_ok=True)
 
-            for in_idx in range(n_in):
-                plt.figure(figsize=(8, 5))
-                for out_idx in range(n_out):
-                    plt.plot(x_vals, y_vals[out_idx, in_idx], label=f"Out {out_idx}")
-                plt.title(f"Layer {i} – Input {in_idx}")
-                plt.xlabel("Input Value")
-                plt.ylabel("Spline Output")
-                plt.grid(True)
-                plt.legend()
-                fname = os.path.join(save_dir, f"layer{i}_input{in_idx}.png")
-                plt.savefig(fname)
-                plt.close()
+    layer0 = model.blocks[0].kan  # Primo KAN_Layer
+    x_knots, y_coeffs = layer0.export_splines()  # y_coeffs: [out_dim, in_dim, n_knots]
 
-    print(f"✅ Grouped spline plots saved to '{save_dir}'")
+    out_dim, in_dim, _ = y_coeffs.shape
+
+    # Prendiamo solo primi 3 attuatori e primi 3 output
+    selected_inputs = [0, 1, 2]   # u1, u2, u3
+    selected_outputs = [0, 1, 2]  # x, y, z
+
+    fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(10, 8), sharex=True, sharey=True)
+
+    for i, out_idx in enumerate(selected_outputs):
+        for j, in_idx in enumerate(selected_inputs):
+            x = x_knots
+            y = y_coeffs[out_idx, in_idx]
+            ax = axes[i, j]
+            ax.plot(x, y, marker='o')
+            ax.set_title(f'$f_{{{in_idx+1}}}(u_{in_idx+1}) \\to {["x", "y", "z"][i]}$')
+            ax.grid(True)
+
+    fig.suptitle("Spline Functions Mapping Actuators to Coordinates", fontsize=14)
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.88)
+
+    plot_path = os.path.join(plot_dir, "kan_splines_grid.png")
+    plt.savefig(plot_path)
+    plt.close()
+    print(f"✅ Spline plot salvato in: {plot_path}")
+
+
+def plot_workspace_error(model, test_loader, device, model_name, plot_dir):
+    all_preds, all_targets = [], []
+    with torch.no_grad():
+        for x, y in test_loader:
+            x, y = x.to(device), y.to(device)
+            pred = model(x)
+            all_preds.append(pred.cpu().numpy())
+            all_targets.append(y.cpu().numpy())
+
+    preds = np.vstack(all_preds)
+    targets = np.vstack(all_targets)
+    coords = ['X', 'Y', 'Z']
+
+    for i, coord in enumerate(coords):
+        axis_errors = np.abs(preds[:, i] - targets[:, i])
+
+        plt.figure(figsize=(6, 5))
+        sc = plt.scatter(targets[:, 0], targets[:, 1], c=axis_errors, cmap="viridis", s=20, alpha=0.8)
+        plt.colorbar(sc, label=f"{coord}-axis absolute error")
+        plt.xlabel("X position")
+        plt.ylabel("Y position")
+        plt.title(f"{model_name} – {coord}-Axis Workspace Error")
+        plt.axis('equal')
+        plt.grid(True)
+        plt.xticks(np.arange(-40, 61, 20))
+        plt.yticks(np.arange(-40, 61, 20))
+        plt.xlim(-45, 65)
+        plt.ylim(-45, 65)
+
+        os.makedirs(plot_dir, exist_ok=True)
+        plt.savefig(os.path.join(plot_dir, f"{model_name.lower()}_workspace_error_{coord}.png"), dpi=300,
+                    bbox_inches='tight')
+        plt.close()
