@@ -11,7 +11,7 @@ from src.utility import (
     eval_loss, visualize_performance, plot_kan_splines
 )
 
-# ----- Setup -----
+# ----- Configurazione -----
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"✅ Using device: {device}")
 batch_size = 64
@@ -19,6 +19,7 @@ seq_len = 10
 hidden_dim = 64
 
 # ----- Dataloaders -----
+# Restituiscono: (input = attuazioni [N, 9], output = marker finale [N, 3])
 train_loader, test_loader = prepare_loaders("bending", 1, 2, batch_size)
 _, seq_test_loader, in_dim, out_dim = prepare_sequence_loaders(
     deformation="bending",
@@ -28,21 +29,30 @@ _, seq_test_loader, in_dim, out_dim = prepare_sequence_loaders(
     batch_size=batch_size
 )
 
+# Controllo shape degli input/output
+print(f"📥 Input dim:  {in_dim} (aspettato: 9)")
+print(f"📤 Output dim: {out_dim} (aspettato: 3)")
+
 # ----- Configurazione KAN -----
 layer_configs = [
-    {"out_features": 4, "n_knots": 6, "x_min": -1.0, "x_max": 1.0, "use_bn": False, "dropout": 0.0},
+    {
+        "out_features": 4,
+        "n_knots": 6,
+        "x_min": -1.0,
+        "x_max": 1.0,
+        "use_bn": False,
+        "dropout": 0.0
+    },
 ]
 
-
 # ----- Inizializza Modelli -----
-kan = KAN_Net(input_dim=9, layer_configs=layer_configs, output_dim=3).to(device)
-mlp = MLP_Net(input_dim=9, hidden_dims=[64, 32], output_dim=3).to(device)
+kan = KAN_Net(input_dim=in_dim, layer_configs=layer_configs, output_dim=out_dim).to(device)
+mlp = MLP_Net(input_dim=in_dim, hidden_dims=[64, 32], output_dim=out_dim).to(device)
 
 # ----- Loss e Ottimizzatori -----
 loss_fn = nn.MSELoss()
 optimizer_kan = torch.optim.Adam(kan.parameters(), lr=1e-3, weight_decay=1e-5)
 optimizer_mlp = torch.optim.Adam(mlp.parameters(), lr=1e-3, weight_decay=1e-5)
-
 
 # ----- Funzione di Training -----
 def train_model(model, train_loader, loss_fn, optimizer, device, epochs=50):
@@ -58,7 +68,6 @@ def train_model(model, train_loader, loss_fn, optimizer, device, epochs=50):
             optimizer.step()
             total_loss += loss.item()
         print(f"[{model.__class__.__name__}] Epoch {epoch:02d} - Loss: {total_loss:.6f}")
-
 
 # ----- Addestramento -----
 train_model(kan, train_loader, loss_fn, optimizer_kan, device)
@@ -87,4 +96,5 @@ with open(os.path.join(plot_dir, "test_losses.json"), "w") as f:
     json.dump({"KAN_test_loss": l_ts_kan, "MLP_test_loss": l_ts_mlp}, f, indent=4)
 print(f"✅ Saved test losses to {os.path.join(plot_dir, 'test_losses.json')}")
 
+# ----- Visualizza spline KAN -----
 plot_kan_splines(kan)
