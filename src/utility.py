@@ -9,42 +9,29 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from dataset.data_loader import DataLoader as MyDataLoader
 from sklearn.metrics import mean_squared_error, r2_score  # aggiungi questo in cima al file
+from dataset.data_loader import DataLoader as MyLoader
 
 
-def prepare_sequence_loaders(
-        deformation: str,
-        train_trial: int,
-        test_trial: int,
-        seq_len: int,
-        batch_size: int = 64
-):
-    """
-    Prepara DataLoader per modelli sequenziali (RNN):
-    - X: sequenze di forma [T - seq_len, seq_len, input_dim]
-    - Y: target futuro [T - seq_len, output_dim]
-    """
+def prepare_sequence_loaders(deformation, train_trial, test_trial, seq_len, batch_size):
+    def load_and_process(trial):
+        loader = MyLoader()
+        loader.load_data(deformation=deformation, trial_num=trial)
+        data = loader.get_data()
+        X = data["actuation"]
+        Y = data["markers"][:, -1, :]  # ultimo marker
+        n_samples = X.shape[0] - seq_len
+        X_seq = np.array([X[i:i + seq_len] for i in range(n_samples)])
+        Y_seq = np.array([Y[i + seq_len] for i in range(n_samples)])
+        return torch.tensor(X_seq, dtype=torch.float32), torch.tensor(Y_seq, dtype=torch.float32)
 
-    def make_loader(trial_num):
-        # carica dati
-        dl = MyDataLoader()
-        dl.load_data(deformation=deformation, trial_num=trial_num)
-        data = dl.get_data()
-        X = torch.tensor(data["actuation"], dtype=torch.float32)  # [T, in_dim]
-        Y = torch.tensor(data["markers"][:, -1, :], dtype=torch.float32)  # [T, out_dim]
+    X_train, Y_train = load_and_process(train_trial)
+    X_test, Y_test = load_and_process(test_trial)
 
-        T, in_dim = X.shape
-        _, out_dim = Y.shape
-        n_seq = T - seq_len
+    train_loader = DataLoader(TensorDataset(X_train, Y_train), batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(TensorDataset(X_test, Y_test), batch_size=batch_size, shuffle=False)
 
-        # costruisci sequenze
-        X_seq = torch.stack([X[i: i + seq_len] for i in range(n_seq)])  # [n_seq, seq_len, in_dim]
-        Y_seq = torch.stack([Y[i + seq_len] for i in range(n_seq)])  # [n_seq, out_dim]
-
-        ds = TensorDataset(X_seq, Y_seq)
-        return DataLoader(ds, batch_size=batch_size, shuffle=(trial_num == train_trial)), in_dim, out_dim
-
-    train_loader, in_dim, out_dim = make_loader(train_trial)
-    test_loader, _, _ = make_loader(test_trial)
+    in_dim = X_train.shape[-1]
+    out_dim = Y_train.shape[-1]
     return train_loader, test_loader, in_dim, out_dim
 
 
@@ -210,13 +197,13 @@ def visualize_performance_rnn(
     plt.close()
 
     # 2) Collect predictions for static (KAN & MLP)
-    kan_model.eval();
-    mlp_model.eval();
+    kan_model.eval()
+    mlp_model.eval()
     rnn_model.eval()
     y_true_stat, y_pred_kan, y_pred_mlp = [], [], []
     with torch.no_grad():
         for x, y in static_loader:
-            x = x.to(device);
+            x = x.to(device)
             y = y.to(device)
             y_true_stat.append(y.cpu().numpy())
             y_pred_kan.append(kan_model(x).cpu().numpy())
@@ -229,7 +216,7 @@ def visualize_performance_rnn(
     y_true_dyn, y_pred_rnn = [], []
     with torch.no_grad():
         for x_seq, y_seq in seq_loader:
-            x_seq = x_seq.to(device);
+            x_seq = x_seq.to(device)
             y_seq = y_seq.to(device)
             y_true_dyn.append(y_seq.cpu().numpy())
             y_pred_rnn.append(rnn_model(x_seq).cpu().numpy())
@@ -274,19 +261,65 @@ def visualize_performance_rnn(
     print(f"\nPlots saved to {plot_dir}")
 
 
-def split_dataset_by_tip_position(X, Y, axis=0, threshold=0.0):
+def split_dataset_by_tip_position(X, Y, axis=1, threshold=0.0, twisting=False):
     """
-    Divide in semipiani LEFT/RIGHT lungo Y[:,axis] rispetto a threshold (es. 0).
+    Split the dataset into LEFT/RIGHT semispaces based on tip position.
+
+    If twisting is False, split along the specified Y[:, axis] vs threshold.
+    If twisting is True, split along the XY diagonal (Y[:,0] - Y[:,1] >= 0).
     """
-    tip_coord = Y[:, axis]
+    if twisting:
+        tip_coord = Y[:, 0] - Y[:, 1]  # Diagonal: X - Y
+        threshold = 0.0
+        print("Using diagonal (X - Y) for twisting split.")
+    else:
+        tip_coord = Y[:, axis]
+        print(f"Split on axis {axis} at {threshold:.4f}")
+
     mask_right = tip_coord >= threshold
     mask_left = tip_coord < threshold
 
-    print(f"Split on axis {axis} at {threshold:.4f} | Right: {mask_right.sum().item()}, Left: {mask_left.sum().item()}")
+    print(f"Right: {mask_right.sum().item()}, Left: {mask_left.sum().item()}")
     return {
         'right': (X[mask_right], Y[mask_right]),
         'left': (X[mask_left], Y[mask_left])
     }
+
+
+def plot_workspace_split_from_splitdata(Y_left, Y_right, title='Workspace split view (Top-down)',
+                                        filename='workspace_split.png'):
+    """
+    Plot workspace (X vs Y) for left and right datasets separately and save the figure.
+
+    Args:
+        Y_left: numpy array of shape (N, 3) with tip positions classified as 'left'.
+        Y_right: numpy array of shape (M, 3) with tip positions classified as 'right'.
+        title: Title of the plot.
+        filename: Name of the file to save the plot (e.g. 'workspace_split.png').
+    """
+    Y_left = Y_left.reshape(-1, 3)
+    Y_right = Y_right.reshape(-1, 3)
+
+    x_left, y_left = Y_left[:, 0], Y_left[:, 1]
+    x_right, y_right = Y_right[:, 0], Y_right[:, 1]
+
+    plt.figure(figsize=(6, 6))
+    plt.scatter(x_right, y_right, s=10, color='orange', label='Right', alpha=0.6)
+    plt.scatter(x_left, y_left, s=10, color='blue', label='Left', alpha=0.6)
+    plt.xlabel("X position")
+    plt.ylabel("Y position")
+    plt.title(title)
+    plt.legend()
+    plt.axis('equal')
+    plt.grid(True)
+
+    # Salvataggio
+    output_dir = os.path.join("plots", "results", "workspace")
+    os.makedirs(output_dir, exist_ok=True)
+    save_path = os.path.join(output_dir, filename)
+    plt.savefig(save_path, bbox_inches='tight', dpi=300)
+    plt.close()
+    print(f"Workspace plot saved to: {save_path}")
 
 
 def compute_metrics(y_true, y_pred):
@@ -458,14 +491,41 @@ def plot_colored_trajectory(gt_pts, rec_pts, t, title, filename, name):
     plt.close()
 
 
+def plot_trajectory_with_background(Y_left, Y_right, gt, rec, t, title, filename, cmap):
+    """
+    Plot a single synthetic trajectory (circle or infinity) over the semiplane background.
+    Inverts X/Y in the plot and uses green for the right semiplane.
+    """
+    plt.figure(figsize=(7, 7))
+
+    # Background semiplanes
+    plt.scatter(Y_left[:, 1], Y_left[:, 0], s=8, alpha=0.1, color='blue', label='Left semiplane')
+    plt.scatter(Y_right[:, 1], Y_right[:, 0], s=8, alpha=0.1, color='green', label='Right semiplane')
+
+    # Trajectory
+    plt.plot(gt[:, 1], gt[:, 0], 'k--', linewidth=1.0, label='Target')
+    scatter = plt.scatter(rec[:, 1], rec[:, 0], c=t, cmap=cmap, s=12, label='Reconstruction')
+
+    plt.colorbar(scatter, label="Time", shrink=0.8)
+    plt.xlabel("Y position")
+    plt.ylabel("X position")
+    plt.title(title)
+    plt.legend()
+    plt.axis('equal')
+    plt.grid(True)
+
+    plt.savefig(filename, dpi=300, bbox_inches='tight')
+    plt.close()
+
+
 def plot_actuations(t, actuations, title, filename):
     plt.figure(figsize=(6, 4))
     for k in range(actuations.shape[1]):
         plt.plot(t, actuations[:, k].cpu(), label=f'Actuatore {k + 1}')
     plt.title(title)
-    plt.xlabel("Tempo");
+    plt.xlabel("Tempo")
     plt.ylabel("Lunghezza")
-    plt.legend();
+    plt.legend()
     plt.grid(True)
     plt.savefig(filename)
     plt.close()
@@ -480,7 +540,7 @@ def extract_equations_from_kan(model, plot_dir):
     out_dim, in_dim, _ = y_coeffs.shape
 
     # Prendiamo solo primi 3 attuatori e primi 3 output
-    selected_inputs = [0, 1, 2]   # u1, u2, u3
+    selected_inputs = [0, 1, 2]  # u1, u2, u3
     selected_outputs = [0, 1, 2]  # x, y, z
 
     fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(10, 8), sharex=True, sharey=True)
@@ -491,7 +551,7 @@ def extract_equations_from_kan(model, plot_dir):
             y = y_coeffs[out_idx, in_idx]
             ax = axes[i, j]
             ax.plot(x, y, marker='o')
-            ax.set_title(f'$f_{{{in_idx+1}}}(u_{in_idx+1}) \\to {["x", "y", "z"][i]}$')
+            ax.set_title(f'$f_{{{in_idx + 1}}}(u_{in_idx + 1}) \\to {["x", "y", "z"][i]}$')
             ax.grid(True)
 
     fig.suptitle("Spline Functions Mapping Actuators to Coordinates", fontsize=14)

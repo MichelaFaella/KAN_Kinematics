@@ -8,7 +8,7 @@ from src.KAN.KAN_Net import KAN_Net
 from src.MLP.MLP_Net import MLP_Net
 from src.utility import (
     prepare_loaders, prepare_sequence_loaders,
-    eval_loss, visualize_performance, extract_equations_from_kan
+    eval_loss, extract_equations_from_kan
 )
 
 # ----- Configurazione -----

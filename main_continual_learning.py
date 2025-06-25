@@ -10,7 +10,7 @@ from src.utility import (
     train_one_epoch,
     evaluate_and_save,
     evaluate_model,
-    plot_model_vs_itself
+    plot_model_vs_itself, plot_workspace_split_from_splitdata
 )
 
 # 1) Setup device
@@ -19,7 +19,7 @@ print(f"Using device: {device}")
 
 # 2) Load & normalize dataset
 dl = MyDataLoader()
-dl.load_data(deformation="bending", trial_num=2)
+dl.load_data(deformation="twisting_CW", trial_num=2)
 data = dl.get_data()
 X_raw = torch.tensor(data['actuation'], dtype=torch.float32)
 Y = torch.tensor(data['markers'][:, -1, :], dtype=torch.float32)
@@ -29,9 +29,12 @@ X_min, X_max = X_raw.min(0)[0], X_raw.max(0)[0]
 X = 2 * (X_raw - X_min) / (X_max - X_min) - 1.0
 
 # 3) Split semipiani based on tip position along Y (axis=1) w.r.t. 0.0
-splits = split_dataset_by_tip_position(X, Y, axis=1, threshold=2.0)
+splits = split_dataset_by_tip_position(X, Y, axis=1, threshold=0.0, twisting=True)
 X_left, Y_left = splits['left']
 X_right, Y_right = splits['right']
+
+plot_workspace_split_from_splitdata(Y_left, Y_right)
+
 
 # 4) DataLoaders
 batch_size = 64
