@@ -4,45 +4,32 @@ from src.KAN.KAN_Block import KAN_Block
 
 
 class KAN_Cell(nn.Module):
-
-    def __init__(self, input_dim: int, hidden_dim: int, layer_configs: list
-                 ):
+    def __init__(self, input_dim, hidden_dim, layer_configs):
         super().__init__()
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
 
-        # Mapping x_t -> hidden
-        cfg_in = layer_configs[0]
-        self.input_block = KAN_Block(
-            in_features=input_dim,
-            out_features=hidden_dim,
-            n_knots=cfg_in["n_knots"],
-            x_min=cfg_in["x_min"],
-            x_max=cfg_in["x_max"],
-            use_bn=cfg_in["use_bn"],
-            activation=cfg_in["activation"],
-            dropout=cfg_in["dropout"]
-        )
+        self.blocks = nn.ModuleList()
+        in_dim = input_dim + hidden_dim  # concatenazione input + hidden
+        for cfg in layer_configs:
+            block = KAN_Block(
+                in_features=in_dim,
+                out_features=cfg["out_features"],
+                n_knots=cfg["n_knots"],
+                x_min=cfg["x_min"],
+                x_max=cfg["x_max"],
+                use_bn=cfg["use_bn"],
+                dropout=cfg["dropout"]
+            )
+            self.blocks.append(block)
+            in_dim = cfg["out_features"]
 
-        # Mapping h_{t-1} -> hidden
-        cfg_hid = layer_configs[1]
-        self.hidden_block = KAN_Block(
-            in_features=hidden_dim,
-            out_features=hidden_dim,
-            n_knots=cfg_hid["n_knots"],
-            x_min=cfg_hid["x_min"],
-            x_max=cfg_hid["x_max"],
-            use_bn=cfg_hid["use_bn"],
-            activation=cfg_hid["activation"],
-            dropout=cfg_hid["dropout"]
-        )
+        self.out_layer = nn.Linear(in_dim, hidden_dim)
 
-        self.norm = nn.LayerNorm(hidden_dim)
-        self.activation = nn.Tanh()
-        self.drop = nn.Dropout(p=0.1)
-
-    def forward(self, x_t: torch.Tensor, h_prev: torch.Tensor) -> torch.Tensor:
-        # Trasforma input e stato precedente
-        i2h = self.input_block(x_t)  # [B, hidden_dim]
-        h2h = self.hidden_block(h_prev)  # [B, hidden_dim]
-        # Somma + non-linearità
-        h_new = self.activation(i2h + h2h)
-        return h_new
+    def forward(self, x_t, h_prev):
+        x_cat = torch.cat([x_t, h_prev], dim=1)
+        out = x_cat
+        for block in self.blocks:
+            out = block(out)
+        h_next = self.out_layer(out)
+        return h_next

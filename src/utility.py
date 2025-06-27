@@ -1,11 +1,12 @@
 import torch
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import datetime
 import pandas as pd
-from torch import nn
-
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from torch.utils.data import DataLoader, TensorDataset
 from dataset.data_loader import DataLoader as MyDataLoader
 from sklearn.metrics import mean_squared_error, r2_score  # aggiungi questo in cima al file
@@ -344,86 +345,6 @@ def evaluate_model(model, X, Y, device):
     return {f"{k}_{m}": v for k, v in compute_metrics(true, pred).items() for m, v in v.items()}
 
 
-def plot_generalization_results(
-        results_csv: str,
-        semipiani_npz: str,
-        train_losses_kan: list,
-        test_losses_kan: list = None,
-        train_losses_mlp: list = None,
-        test_losses_mlp: list = None,
-        results_dir: str = "results"
-):
-    """
-    Genera e salva nella cartella `results_dir`:
-      1) Bar chart di RMSE e R² per semipiano (right/left)
-      2) Scatter true vs pred per modello e semipiano
-      3) Curva di convergenza loss vs epoca per train/test e modello (solo se disponibili)
-    """
-    os.makedirs(results_dir, exist_ok=True)
-
-    # 1) Bar chart di RMSE e R²
-    df = pd.read_csv(results_csv)
-    for metric in ['RMSE', 'R2']:
-        for side in df['side'].unique():
-            sub = df[df['side'] == side].set_index('model')
-            axes = ['X', 'Y', 'Z']
-            vals = sub[[f'{ax}_{metric}' for ax in axes]].T
-            vals.columns = ['KAN', 'MLP']
-            plt.figure(figsize=(6, 4))
-            vals.plot(kind='bar', width=0.7, ax=plt.gca())
-            plt.title(f'{metric} per coordinata ({side})')
-            plt.xlabel('Coordinata')
-            plt.ylabel(metric)
-            plt.tight_layout()
-            png_path = os.path.join(results_dir, f'bar_{side}_{metric}.png')
-            plt.savefig(png_path)
-            plt.close()
-
-    # 2) Scatter true vs pred
-    data = np.load(semipiani_npz)
-    sides = [key.split('_')[1] for key in data.files if key.startswith('true_')]
-    models = ['kan', 'mlp']
-    coord_labels = ['X', 'Y', 'Z']
-    for side in sides:
-        plt.figure(figsize=(12, 4))
-        for mi, model in enumerate(models):
-            for ci, coord in enumerate(coord_labels):
-                key_true = f'true_{side}'
-                key_pred = f'pred_{model}_{side}'
-                y_true = data[key_true][:, ci]
-                y_pred = data[key_pred][:, ci]
-                ax = plt.subplot(2, 3, mi * 3 + ci + 1)
-                ax.scatter(y_true, y_pred, alpha=0.3)
-                mn, mx = y_true.min(), y_true.max()
-                ax.plot([mn, mx], [mn, mx], '--', color='gray')
-                ax.set_title(f'{model.upper()} {side} {coord}')
-                ax.set_xlabel('True')
-                ax.set_ylabel('Pred')
-        plt.tight_layout()
-        png_path = os.path.join(results_dir, f'scatter_{side}.png')
-        plt.savefig(png_path)
-        plt.close()
-
-    # 3) Curva di convergenza
-    if train_losses_kan and train_losses_mlp:
-        epochs = list(range(1, len(train_losses_kan) + 1))
-        plt.figure(figsize=(6, 4))
-        plt.plot(epochs, train_losses_kan, label='KAN train')
-        if test_losses_kan:
-            plt.plot(epochs, test_losses_kan, label='KAN test', linestyle='--')
-        plt.plot(epochs, train_losses_mlp, label='MLP train')
-        if test_losses_mlp:
-            plt.plot(epochs, test_losses_mlp, label='MLP test', linestyle='--')
-        plt.xlabel('Epoca')
-        plt.ylabel('MSE Loss')
-        plt.title('Convergenza')
-        plt.legend()
-        plt.grid(True)
-        png_path = os.path.join(results_dir, 'convergenza_loss.png')
-        plt.savefig(png_path)
-        plt.close()
-
-
 def plot_model_vs_itself(results_dir, model_name, metric='X_RMSE', labels=('MsDs', 'MdDs')):
     values = []
     for label in labels:
@@ -471,66 +392,6 @@ def evaluate_and_save(models, X, Y, device, evaluate_model_fn, results_dir, labe
     np.savez(os.path.join(results_dir, f'predictions_{label}.npz'), **preds)
 
 
-def plot_colored_trajectory(gt_pts, rec_pts, t, title, filename, name):
-    plt.figure(figsize=(6, 5))
-
-    # Target: linea nera tratteggiata (non color coded)
-    plt.plot(gt_pts[:, 0], gt_pts[:, 1], 'k--', label='Target', linewidth=1.5)
-
-    # Predetto: color coded sul tempo
-    scatter = plt.scatter(rec_pts[:, 0], rec_pts[:, 1], c=t, cmap='autumn', label='Predicted', alpha=0.9)
-
-    plt.title(f"Traiettoria nel workspace {name} - {title}")
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.colorbar(scatter, label='Tempo (target)')
-    plt.legend()
-    plt.axis('equal')
-    plt.grid(True)
-    plt.savefig(filename)
-    plt.close()
-
-
-def plot_trajectory_with_background(Y_left, Y_right, gt, rec, t, title, filename, cmap):
-    """
-    Plot a single synthetic trajectory (circle or infinity) over the semiplane background.
-    Inverts X/Y in the plot and uses green for the right semiplane.
-    """
-    plt.figure(figsize=(7, 7))
-
-    # Background semiplanes
-    plt.scatter(Y_left[:, 1], Y_left[:, 0], s=8, alpha=0.1, color='blue', label='Left semiplane')
-    plt.scatter(Y_right[:, 1], Y_right[:, 0], s=8, alpha=0.1, color='green', label='Right semiplane')
-
-    # Trajectory
-    plt.plot(gt[:, 1], gt[:, 0], 'k--', linewidth=1.0, label='Target')
-    scatter = plt.scatter(rec[:, 1], rec[:, 0], c=t, cmap=cmap, s=12, label='Reconstruction')
-
-    plt.colorbar(scatter, label="Time", shrink=0.8)
-    plt.xlabel("Y position")
-    plt.ylabel("X position")
-    plt.title(title)
-    plt.legend()
-    plt.axis('equal')
-    plt.grid(True)
-
-    plt.savefig(filename, dpi=300, bbox_inches='tight')
-    plt.close()
-
-
-def plot_actuations(t, actuations, title, filename):
-    plt.figure(figsize=(6, 4))
-    for k in range(actuations.shape[1]):
-        plt.plot(t, actuations[:, k].cpu(), label=f'Actuatore {k + 1}')
-    plt.title(title)
-    plt.xlabel("Tempo")
-    plt.ylabel("Lunghezza")
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(filename)
-    plt.close()
-
-
 def extract_equations_from_kan(model, plot_dir):
     os.makedirs(plot_dir, exist_ok=True)
 
@@ -564,36 +425,118 @@ def extract_equations_from_kan(model, plot_dir):
     print(f"✅ Spline plot salvato in: {plot_path}")
 
 
-def plot_workspace_error(model, test_loader, device, model_name, plot_dir):
-    all_preds, all_targets = [], []
+def plot_colored_trajectory_comp(gt_pts, rec_pts_kan, t, title, filename, name_kan,
+                                 rec_pts_mlp=None, name_mlp="MLP", workspace_pts=None):
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    # Inversione assi
+    x_gt, y_gt = gt_pts[:, 1], gt_pts[:, 0]
+    x_rec_kan, y_rec_kan = rec_pts_kan[:, 1], rec_pts_kan[:, 0]
+
+    # Workspace
+    if workspace_pts is not None:
+        x_ws, y_ws = workspace_pts[:, 1], workspace_pts[:, 0]
+        x_center = (x_ws.min() + x_ws.max()) / 2
+        left_mask = x_ws < x_center
+        right_mask = x_ws >= x_center
+        ax.scatter(x_ws[left_mask], y_ws[left_mask], color='lightskyblue', s=5, alpha=0.5, label='Workspace (sx)')
+        ax.scatter(x_ws[right_mask], y_ws[right_mask], color='dodgerblue', s=5, alpha=0.5, label='Workspace (dx)')
+
+    # Target: linea tratteggiata nera
+    ax.plot(x_gt, y_gt, 'k--', label='Target', linewidth=2)
+
+    # Predizione KAN (rossa)
+    scatter_kan = ax.scatter(x_rec_kan, y_rec_kan, c=t, cmap='autumn', alpha=0.95, s=30, label=f'Predicted {name_kan}')
+
+    # Predizione MLP (verde) — aggiungiamo il secondo scatter
+    scatter_mlp = None
+    if rec_pts_mlp is not None:
+        x_rec_mlp, y_rec_mlp = rec_pts_mlp[:, 1], rec_pts_mlp[:, 0]
+        scatter_mlp = ax.scatter(x_rec_mlp, y_rec_mlp, c=t, cmap='summer', alpha=0.9, s=20, marker='x',
+                                 label=f'Predicted {name_mlp}')
+
+    ax.set_xlabel("y")
+    ax.set_ylabel("x")
+    ax.set_title(f"Traiettoria nel workspace - {title}")
+    ax.axis('equal')
+    ax.grid(True)
+
+    # Divider per inserire due colorbar
+    divider = make_axes_locatable(ax)
+    cax1 = divider.append_axes("right", size="4%", pad=0.1)
+    cb1 = plt.colorbar(scatter_kan, cax=cax1)
+    cb1.set_label("Tempo (KAN)")
+
+    if scatter_mlp is not None:
+        cax2 = divider.append_axes("right", size="4%", pad=0.6)
+        norm_mlp = mcolors.Normalize(vmin=min(t), vmax=max(t))
+        cb2 = plt.colorbar(cm.ScalarMappable(norm=norm_mlp, cmap='summer'), cax=cax2)
+        cb2.set_label("Tempo (MLP)")
+
+    ax.legend(loc='best')
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300)
+    plt.close()
+
+
+def plot_actuations_comp(t, actuations_kan, title, filename, actuations_mlp=None, label_kan="KAN", label_mlp="MLP"):
+    plt.figure(figsize=(6, 4))
+    colors = cm.tab10.colors  # 10 colori distinti
+
+    # Plot attuazioni KAN (colori pieni)
+    for k in range(actuations_kan.shape[1]):
+        plt.plot(t, actuations_kan[:, k].cpu(), label=f'{label_kan} - Attuatore {k + 1}', color=colors[k % 10])
+
+    # Plot attuazioni MLP (stile tratteggiato)
+    if actuations_mlp is not None:
+        for k in range(actuations_mlp.shape[1]):
+            plt.plot(t, actuations_mlp[:, k].cpu(), linestyle='--', label=f'{label_mlp} - Attuatore {k + 1}',
+                     color=colors[k % 10])
+
+    plt.title(title)
+    plt.xlabel("Tempo")
+    plt.ylabel("Lunghezza")
+    plt.legend(fontsize=8)
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300)
+    plt.close()
+
+
+def plot_rnn_predictions_workspace(model, loader, device, axis=0, title_prefix="Model"):
+    """
+       Plots the absolute error along a given axis projected in the XY workspace.
+
+       Parameters:
+       - model: trained model
+       - loader: test dataloader (static or sequential)
+       - device: 'cuda' or 'cpu'
+       - axis: 0 for X, 1 for Y, 2 for Z
+       - title_prefix: string to prepend in the plot title
+       """
+    model.eval()
+    preds_all, targets_all = [], []
+
     with torch.no_grad():
-        for x, y in test_loader:
-            x, y = x.to(device), y.to(device)
-            pred = model(x)
-            all_preds.append(pred.cpu().numpy())
-            all_targets.append(y.cpu().numpy())
+        for X_batch, y_batch in loader:
+            X_batch = X_batch.to(device)
+            preds = model(X_batch).cpu()
+            preds_all.append(preds)
+            targets_all.append(y_batch)
 
-    preds = np.vstack(all_preds)
-    targets = np.vstack(all_targets)
-    coords = ['X', 'Y', 'Z']
+    preds_all = torch.cat(preds_all).numpy()
+    targets_all = torch.cat(targets_all).numpy()
 
-    for i, coord in enumerate(coords):
-        axis_errors = np.abs(preds[:, i] - targets[:, i])
+    abs_error = np.abs(preds_all[:, axis] - targets_all[:, axis])
+    x_coords = targets_all[:, 0]
+    y_coords = targets_all[:, 1]
 
-        plt.figure(figsize=(6, 5))
-        sc = plt.scatter(targets[:, 0], targets[:, 1], c=axis_errors, cmap="viridis", s=20, alpha=0.8)
-        plt.colorbar(sc, label=f"{coord}-axis absolute error")
-        plt.xlabel("X position")
-        plt.ylabel("Y position")
-        plt.title(f"{model_name} – {coord}-Axis Workspace Error")
-        plt.axis('equal')
-        plt.grid(True)
-        plt.xticks(np.arange(-40, 61, 20))
-        plt.yticks(np.arange(-40, 61, 20))
-        plt.xlim(-45, 65)
-        plt.ylim(-45, 65)
-
-        os.makedirs(plot_dir, exist_ok=True)
-        plt.savefig(os.path.join(plot_dir, f"{model_name.lower()}_workspace_error_{coord}.png"), dpi=300,
-                    bbox_inches='tight')
-        plt.close()
+    plt.figure(figsize=(8, 7))
+    scatter = plt.scatter(x_coords, y_coords, c=abs_error, cmap='viridis', s=15, alpha=0.9)
+    plt.colorbar(scatter, label=f"{['X', 'Y', 'Z'][axis]}-axis absolute error")
+    plt.xlabel("X position")
+    plt.ylabel("Y position")
+    plt.title(f"{title_prefix} – {['X', 'Y', 'Z'][axis]}-Axis Workspace Error")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()

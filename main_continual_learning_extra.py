@@ -17,28 +17,32 @@ from src.utility import (
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# 2) Load & normalize dataset
-dl = MyDataLoader()
-dl.load_data(deformation="twisting_CW", trial_num=2)
-data = dl.get_data()
-X_raw = torch.tensor(data['actuation'], dtype=torch.float32)
-Y = torch.tensor(data['markers'][:, -1, :], dtype=torch.float32)
+# 2) Load LEFT dataset (bending → Ds)
+dl_left = MyDataLoader()
+dl_left.load_data(deformation="bending", trial_num=2)
+data_left = dl_left.get_data()
+X_raw_left = torch.tensor(data_left['actuation'], dtype=torch.float32)
+Y_left = torch.tensor(data_left['markers'][:, -1, :], dtype=torch.float32)
 
-# Normalize X feature‐wise to [-1,1]
-X_min, X_max = X_raw.min(0)[0], X_raw.max(0)[0]
-X = 2 * (X_raw - X_min) / (X_max - X_min) - 1.0
+# 2b) Load RIGHT dataset (twisting → Dd)
+dl_right = MyDataLoader()
+dl_right.load_data(deformation="twisting_CW", trial_num=2)
+data_right = dl_right.get_data()
+X_raw_right = torch.tensor(data_right['actuation'], dtype=torch.float32)
+Y_right = torch.tensor(data_right['markers'][:, -1, :], dtype=torch.float32)
 
-# 3) Split semipiani based on tip position along Y (axis=1) w.r.t. 0.0
-splits = split_dataset_by_tip_position(X, Y, axis=1, threshold=0.0, twisting=True)
-X_left, Y_left = splits['left']
-X_right, Y_right = splits['right']
+# Calcolo normalizzazione su entrambe le sorgenti combinate
+X_total = torch.cat([X_raw_left, X_raw_right], dim=0)
+X_min, X_max = X_total.min(0)[0], X_total.max(0)[0]
+X_left = 2 * (X_raw_left - X_min) / (X_max - X_min) - 1.0
+X_right = 2 * (X_raw_right - X_min) / (X_max - X_min) - 1.0
 
 plot_workspace_split_from_splitdata(Y_left, Y_right)
 
-
 # 4) DataLoaders
 batch_size = 64
-epochs = 100
+epochs_phase1 = 200
+epochs_phase2 = 30
 loader_left = DataLoader(TensorDataset(X_left, Y_left), batch_size=batch_size, shuffle=True)
 loader_right = DataLoader(TensorDataset(X_right, Y_right), batch_size=batch_size, shuffle=True)
 
@@ -50,17 +54,16 @@ os.makedirs(results_dir, exist_ok=True)
 kan = KAN_Net(
     input_dim=9,
     layer_configs=[
-        {"out_features": 64, "n_knots": 16, "x_min": -1.0, "x_max": 1.0, "use_bn": True,
-         "dropout": 0.1},
-        {"out_features": 32, "n_knots": 12, "x_min": -1.0, "x_max": 1.0, "use_bn": False,
-         "dropout": 0.0},
+        {"out_features": 128, "n_knots": 32, "x_min": float(X_min[i]), "x_max": float(X_max[i]), "use_bn": True, "dropout": 0.0} for i in range(9)
+    ] + [
+        {"out_features": 64, "n_knots": 24, "x_min": -1.0, "x_max": 1.0, "use_bn": True, "dropout": 0.0}
     ],
     output_dim=3
 ).to(device)
 
 mlp = MLP_Net(input_dim=9, hidden_dims=[64, 32], output_dim=3).to(device)
 
-opt_kan = torch.optim.Adam(kan.parameters(), lr=1e-3)
+opt_kan = torch.optim.AdamW(kan.parameters(), lr=1e-3, weight_decay=1e-2)
 opt_mlp = torch.optim.Adam(mlp.parameters(), lr=1e-3)
 
 loss_fn = nn.MSELoss()
@@ -68,14 +71,14 @@ model_names = ['KAN', 'MLP']
 models = [kan, mlp]
 opts = [opt_kan, opt_mlp]
 
-# === Phase 1: Ms (train on LEFT) ===
-print("\n=== Phase 1: Ms (train on LEFT) ===")
-for epoch in range(1, epochs + 1):
+# === Phase 1: Ms (train on Ds → bending) ===
+print("\n=== Phase 1: Ms (train on Ds: bending) ===")
+for epoch in range(1, epochs_phase1 + 1):
     for name, model, opt in zip(model_names, models, opts):
         loss = train_one_epoch(model, loader_left, loss_fn, opt, device)
-        print(f"[MsDs][Epoch {epoch}/{epochs}] {name} train loss: {loss:.4f}")
+        print(f"[MsDs][Epoch {epoch}/{epochs_phase1}] {name} train loss: {loss:.4f}")
 
-# Evaluate Ms on LEFT
+# Evaluate Ms on Ds
 evaluate_and_save(
     {'KAN': kan, 'MLP': mlp},
     X_left, Y_left,
@@ -83,14 +86,24 @@ evaluate_and_save(
     label='MsDs'
 )
 
-# === Phase 2: Md (fine‐tune on RIGHT) ===
-print("\n=== Phase 2: Md (fine‐tune on RIGHT) ===")
-for epoch in range(1, epochs + 1):
+# === Phase 2: Md (fine‐tune on Dd → twisting) ===
+print("\n=== Phase 2: Md (fine‐tune on Dd: twisting) ===")
+
+# Reduce LR + freeze 1st layer of KAN to retain knowledge
+for g in opt_kan.param_groups:
+    g['lr'] = 5e-5
+    g['weight_decay'] = 1e-2
+
+if hasattr(kan, 'layers') and len(kan.layers) > 0:
+    for param in kan.layers[0].parameters():
+        param.requires_grad = False
+
+for epoch in range(1, epochs_phase2 + 1):
     for name, model, opt in zip(model_names, models, opts):
         loss = train_one_epoch(model, loader_right, loss_fn, opt, device)
-        print(f"[MdDs][Epoch {epoch}/{epochs}] {name} train loss: {loss:.4f}")
+        print(f"[MdDd][Epoch {epoch}/{epochs_phase2}] {name} train loss: {loss:.4f}")
 
-# Evaluate Md on LEFT (MdDs)
+# Evaluate Md on Ds
 evaluate_and_save(
     {'KAN': kan, 'MLP': mlp},
     X_left, Y_left,
@@ -98,7 +111,7 @@ evaluate_and_save(
     label='MdDs'
 )
 
-# Evaluate Md on RIGHT (MdDd)
+# Evaluate Md on Dd
 evaluate_and_save(
     {'KAN': kan, 'MLP': mlp},
     X_right, Y_right,
