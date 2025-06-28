@@ -89,7 +89,7 @@ def eval_loss(model, loader, loss_fn, device):
     return total / len(loader.dataset)
 
 
-def visualize_performance(test_losses_kan, test_losses_mlp, kan, mlp, test_loader, device):
+def visualize_performance(test_losses_kan, test_losses_mlp, kan, mlp, test_loader, device, name):
     """
     Plotta:
       1) Test loss vs epoca per KAN e MLP
@@ -135,7 +135,7 @@ def visualize_performance(test_losses_kan, test_losses_mlp, kan, mlp, test_loade
 
     # 3) Scatter plot e metriche
     coords = ['X', 'Y', 'Z']
-    print("\n Metriche di performance sul test set (Bending Trial):")
+    print(f"\n Metriche di performance sul test set ({name}):")
     for i, coord in enumerate(coords):
         plt.figure()
         plt.scatter(y_true[:, i], y_pred_kan[:, i], alpha=0.3, label='KAN')
@@ -147,7 +147,7 @@ def visualize_performance(test_losses_kan, test_losses_mlp, kan, mlp, test_loade
         plt.title(f'True vs Predicted ({coord}) on Bending Test')
         plt.legend()
         plt.grid(True)
-        plt.savefig(os.path.join(plot_dir, f'true_vs_pred_{coord}.png'))
+        plt.savefig(os.path.join(plot_dir, f'true_vs_pred_{coord}_{name}.png'))
         plt.close()
 
         # Metriche (RMSE calcolato manualmente per compatibilità)
