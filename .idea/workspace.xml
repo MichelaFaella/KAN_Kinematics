@@ -4,12 +4,31 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5d1c1238-4e51-48de-9a37-2e998f87278f" name="Changes" comment="Fixing">
+    <list default="true" id="5d1c1238-4e51-48de-9a37-2e998f87278f" name="Changes" comment="Adding new task">
+      <change afterPath="$PROJECT_DIR$/CL_extra.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main_continual_learning_extra.py" beforeDir="false" afterPath="$PROJECT_DIR$/main_continual_learning_extra.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/evaluation_MdDd.csv" beforeDir="false" afterPath="$PROJECT_DIR$/plots/results/evaluation_MdDd.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/evaluation_MdDs.csv" beforeDir="false" afterPath="$PROJECT_DIR$/plots/results/evaluation_MdDs.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/evaluation_MsDs.csv" beforeDir="false" afterPath="$PROJECT_DIR$/plots/results/evaluation_MsDs.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main_continual_learning_extra.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plot/2025-06-28/test_loss_curve.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/KAN_X_R2_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/KAN_X_RMSE_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/KAN_Y_R2_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/KAN_Y_RMSE_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/KAN_Z_R2_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/KAN_Z_RMSE_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/MLP_X_R2_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/MLP_X_RMSE_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/MLP_Y_R2_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/MLP_Y_RMSE_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/MLP_Z_R2_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/MLP_Z_RMSE_comparison.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/evaluation_MdDd.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/evaluation_MdDs.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/evaluation_MsDs.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/predictions_MdDd.npz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/predictions_MdDs.npz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/predictions_MsDs.npz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots/results/workspace/workspace_split.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/presentation/Kan_presentation-compressed.pdf" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utility.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -58,11 +77,11 @@
       <recent name="C:\Users\Michela\PycharmProjects\KAN_project" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Michela\PycharmProjects\KAN_project\plots\results" />
+      <recent name="C:\Users\Michela\PycharmProjects\KAN_project\presentation" />
       <recent name="C:\Users\Michela\PycharmProjects\KAN_project\plots\plot" />
       <recent name="C:\Users\Michela\PycharmProjects\KAN_project\plots" />
-      <recent name="C:\Users\Michela\PycharmProjects\KAN_project\presentation" />
       <recent name="C:\Users\Michela\PycharmProjects\KAN_project\plots\plot_inv" />
-      <recent name="C:\Users\Michela\PycharmProjects\KAN_project\models" />
     </key>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -95,7 +114,7 @@
       <workItem from="1750960438616" duration="5953000" />
       <workItem from="1751017216810" duration="16221000" />
       <workItem from="1751049241514" duration="5979000" />
-      <workItem from="1751095465646" duration="4609000" />
+      <workItem from="1751095465646" duration="32238000" />
     </task>
     <task id="LOCAL-00001" summary="Add dataset">
       <option name="closed" value="true" />
@@ -217,7 +236,15 @@
       <option name="project" value="LOCAL" />
       <updated>1751049282587</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="Adding new task">
+      <option name="closed" value="true" />
+      <created>1751100384306</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1751100384306</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -258,29 +285,33 @@
     <MESSAGE value="Cleaning" />
     <MESSAGE value="Presentation" />
     <MESSAGE value="Fixing" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fixing" />
+    <MESSAGE value="Adding new task" />
+    <option name="LAST_COMMIT_MESSAGE" value="Adding new task" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/main_continual_learning.py</url>
-          <option name="timeStamp" value="1" />
+          <url>file://$PROJECT_DIR$/src/utility.py</url>
+          <line>289</line>
+          <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/KAN_project$inverse_main_mlp.coverage" NAME="inverse_main_mlp Coverage Results" MODIFIED="1750859970351" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/KAN_project$CL_extra.coverage" NAME="CL_extra Coverage Results" MODIFIED="1751135548352" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/KAN_project$main_rnn.coverage" NAME="main_rnn Coverage Results" MODIFIED="1751037174611" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/KAN_project$evaluate_inverse.coverage" NAME="evaluate_inverse Coverage Results" MODIFIED="1750505197669" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/KAN_project$main_fuso.coverage" NAME="main_fuso Coverage Results" MODIFIED="1750967127321" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/KAN_project$main_continual_learning_extra.coverage" NAME="main_continual_learning_extra Coverage Results" MODIFIED="1751125156232" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/KAN_project$inverse_main.coverage" NAME="inverse_main Coverage Results" MODIFIED="1750945524864" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/KAN_project$main_continual_learning.coverage" NAME="main_continual_learning Coverage Results" MODIFIED="1750792361959" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/KAN_project$main_inverse.coverage" NAME="main_inverse Coverage Results" MODIFIED="1750427937875" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/KAN_project$main_compare.coverage" NAME="main_compare Coverage Results" MODIFIED="1751024116668" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/KAN_project$main_continual_learning_extra.coverage" NAME="main_continual_learning_extra Coverage Results" MODIFIED="1751099805612" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/KAN_project$main_inverse_kinematics.coverage" NAME="main_inverse_kinematics Coverage Results" MODIFIED="1750507016225" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/KAN_project$inverse_main.coverage" NAME="inverse_main Coverage Results" MODIFIED="1750945524864" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/KAN_project$main.coverage" NAME="main Coverage Results" MODIFIED="1751024012177" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/KAN_project$main_continual_learning.coverage" NAME="main_continual_learning Coverage Results" MODIFIED="1750792361959" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/KAN_project$main_inverse_evaluation_rnn.coverage" NAME="main_inverse_evaluation_rnn Coverage Results" MODIFIED="1751125905001" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

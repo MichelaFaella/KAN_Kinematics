@@ -540,3 +540,14 @@ def plot_rnn_predictions_workspace(model, loader, device, axis=0, title_prefix="
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+
+
+def evaluate_model_clamped(model, X, Y, device):
+    raw = evaluate_model(model, X, Y, device)
+    clamped = {}
+    for key, val in raw.items():
+        v = float(val)
+        if key.endswith('_R2') and v < 0.0:
+            v = 0.0
+        clamped[key] = v
+    return clamped
