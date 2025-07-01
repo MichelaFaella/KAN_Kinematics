@@ -4,32 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5d1c1238-4e51-48de-9a37-2e998f87278f" name="Changes" comment="Adding new task">
-      <change afterPath="$PROJECT_DIR$/CL_extra.py" afterDir="false" />
+    <list default="true" id="5d1c1238-4e51-48de-9a37-2e998f87278f" name="Changes" comment="Final changes">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main_continual_learning_extra.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plot/2025-06-28/test_loss_curve.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/KAN_X_R2_comparison.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/KAN_X_RMSE_comparison.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/KAN_Y_R2_comparison.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/KAN_Y_RMSE_comparison.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/KAN_Z_R2_comparison.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/KAN_Z_RMSE_comparison.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/MLP_X_R2_comparison.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/MLP_X_RMSE_comparison.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/MLP_Y_R2_comparison.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/MLP_Y_RMSE_comparison.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/MLP_Z_R2_comparison.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/MLP_Z_RMSE_comparison.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/evaluation_MdDd.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/evaluation_MdDs.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/evaluation_MsDs.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/predictions_MdDd.npz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/predictions_MdDs.npz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/predictions_MsDs.npz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/plots/results/workspace/workspace_split.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/presentation/Kan_presentation-compressed.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utility.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -77,8 +53,8 @@
       <recent name="C:\Users\Michela\PycharmProjects\KAN_project" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\Michela\PycharmProjects\KAN_project\plots\results" />
       <recent name="C:\Users\Michela\PycharmProjects\KAN_project\presentation" />
+      <recent name="C:\Users\Michela\PycharmProjects\KAN_project\plots\results" />
       <recent name="C:\Users\Michela\PycharmProjects\KAN_project\plots\plot" />
       <recent name="C:\Users\Michela\PycharmProjects\KAN_project\plots" />
       <recent name="C:\Users\Michela\PycharmProjects\KAN_project\plots\plot_inv" />
@@ -114,7 +90,10 @@
       <workItem from="1750960438616" duration="5953000" />
       <workItem from="1751017216810" duration="16221000" />
       <workItem from="1751049241514" duration="5979000" />
-      <workItem from="1751095465646" duration="32238000" />
+      <workItem from="1751095465646" duration="32880000" />
+      <workItem from="1751208974436" duration="1209000" />
+      <workItem from="1751355343025" duration="7000" />
+      <workItem from="1751402859004" duration="15000" />
     </task>
     <task id="LOCAL-00001" summary="Add dataset">
       <option name="closed" value="true" />
@@ -244,7 +223,15 @@
       <option name="project" value="LOCAL" />
       <updated>1751100384306</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="Final changes">
+      <option name="closed" value="true" />
+      <created>1751140368936</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1751140368936</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -286,7 +273,8 @@
     <MESSAGE value="Presentation" />
     <MESSAGE value="Fixing" />
     <MESSAGE value="Adding new task" />
-    <option name="LAST_COMMIT_MESSAGE" value="Adding new task" />
+    <MESSAGE value="Final changes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Final changes" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
