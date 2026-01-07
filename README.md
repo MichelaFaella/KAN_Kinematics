@@ -1,5 +1,9 @@
 # 🤖 KAN Robot control 
 
+<p align = "center">
+  <img src = "https://upload.wikimedia.org/wikipedia/it/e/e2/Stemma_unipi.svg" width="256" height="256">
+</p>
+
 This work investigates the performance of **Kolmogorov–Arnold Networks** (KAN) compared to standard Multi-Layer Perceptrons (MLP) for estima the final 3D position of markers on a soft robotic system undergoing mechanical deformation. Both models are trained on static actuation data and evaluated on unseen configurations, with a focus on generalization across actuation subspaces. As an extension, we explore a sequential variant of KAN (KAN-RNN), incorporating temporal dynamics through recurrent processing. Experimental results highlight the superior accuracy of KAN over MLP in the static setting, while the KAN-RNN shows potential but remains less competitive in its current form.
 
 ---
